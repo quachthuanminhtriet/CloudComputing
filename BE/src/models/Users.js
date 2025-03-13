@@ -7,6 +7,8 @@ const Users = sequelize.define('Users', {
     password: { type: DataTypes.STRING, allowNull: false },
     fullname: { type: DataTypes.STRING, allowNull: false},
     mail: { type: DataTypes.STRING, allowNull: false, unique: true},
+    avatar: { type: DataTypes.STRING, allowNull: true}, // Link ảnh đại diện
+    status: { type: DataTypes.STRING, defaultValue: "online" }, // online, offline
 }, {
     timestamps: true // tạo tự động create và update time
 });

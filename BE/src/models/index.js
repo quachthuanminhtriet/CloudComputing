@@ -1,16 +1,50 @@
-const sequelize = require('../configs/database');
-const Users = require('./users'); // Import model Users
+const { DataTypes } = require("sequelize");
+const sequelize = require("../configs/database");
+const Users = require("./Users");
+const Conversations = require("./Conversations");
 
-// Đồng bộ model với database (tạo bảng nếu chưa có)
-const syncDB = async () => {
-    try {
-        await sequelize.sync({ alter: true }); // `alter: true` giúp cập nhật bảng mà không mất dữ liệu
-        console.log("✅ Database & tables synchronized!");
-    } catch (error) {
-        console.error("❌ Lỗi đồng bộ database:", error);
-    }
-};
+const Participants = sequelize.define(
+  "Participants",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    conversationId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: Conversations,
+        key: "id",
+      },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: Users,
+        key: "id",
+      },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
+    },
+    role: {
+      type: DataTypes.STRING,
+      defaultValue: "member",
+    },
+  },
+  {
+    timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["userId", "conversationId"],
+      },
+    ],
+  }
+);
 
-syncDB(); // Gọi hàm đồng bộ database
-
-module.exports = { Users };
+module.exports = Participants;

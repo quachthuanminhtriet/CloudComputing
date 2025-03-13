@@ -1,35 +1,36 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { Users } = require('../models');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { Users } = require("../models");
 
 // Đăng ký user
 const register = async (req, res) => {
     try {
         const { username, password, fullname, mail } = req.body;
 
-        // Kiểm tra xem username hoặc mail đã tồn tại chưa
+        if (!username || !password || !fullname || !mail) {
+            return res.status(400).json({ message: "Thiếu thông tin!" });
+        }
+
+        // Kiểm tra email hợp lệ
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(mail)) {
+            return res.status(400).json({ message: "Email không hợp lệ!" });
+        }
+
+        // Kiểm tra username hoặc email đã tồn tại
         const existingUser = await Users.findOne({ where: { username } });
         const existingMail = await Users.findOne({ where: { mail } });
 
-        if (existingUser) {
-            return res.status(400).json({ message: "Username đã tồn tại!" });
-        }
-        if (existingMail) {
-            return res.status(400).json({ message: "Email đã được sử dụng!" });
-        }
+        if (existingUser) return res.status(400).json({ message: "Username đã tồn tại!" });
+        if (existingMail) return res.status(400).json({ message: "Email đã được sử dụng!" });
 
-        // Mã hóa mật khẩu trước khi lưu vào database
+        // Mã hóa mật khẩu
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Tạo user mới
-        const newUser = await Users.create({
-            username,
-            password: hashedPassword,
-            fullname,
-            mail
-        });
+        const newUser = await Users.create({ username, password: hashedPassword, fullname, mail });
 
-        res.status(201).json({ message: "Đăng ký thành công!", user: newUser });
+        res.status(201).json({ message: "Đăng ký thành công!", userId: newUser.id });
     } catch (error) {
         res.status(500).json({ message: "Lỗi server!", error: error.message });
     }
@@ -47,18 +48,23 @@ const login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Sai mật khẩu!" });
 
-        const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ message: "Đăng nhập thành công!", token });
+        const token = jwt.sign(
+            { id: user.id, username: user.username },
+            process.env.JWT_SECRET,
+            { expiresIn: "1h" }
+        );
+
+        res.json({ message: "Đăng nhập thành công!", token, userId: user.id });
     } catch (error) {
         res.status(500).json({ message: "Lỗi server!", error: error.message });
     }
 };
 
-// Lấy toàn bộ user
+// Lấy danh sách tất cả user (ẩn mật khẩu)
 const getAllUsers = async (req, res) => {
     try {
         const users = await Users.findAll({
-            attributes: { exclude: ['password'] } // Không trả về mật khẩu
+            attributes: ["id", "username", "fullname", "mail", "avatar", "createdAt"]
         });
         res.json(users);
     } catch (error) {
@@ -66,19 +72,24 @@ const getAllUsers = async (req, res) => {
     }
 };
 
+// Cập nhật thông tin user
 const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const { fullname } = req.body;
+        const { fullname, mail, password, avatar } = req.body;
 
-        // Kiểm tra user có tồn tại không
         const user = await Users.findByPk(id);
         if (!user) return res.status(404).json({ message: "User không tồn tại!" });
 
-        // Cập nhật user
-        await user.update({ fullname });
+        let hashedPassword = user.password;
+        if (password) {
+            hashedPassword = await bcrypt.hash(password, 10);
+        }
+        
 
-        res.json({ message: "Cập nhật thành công!", user });
+        await user.update({ fullname, mail, password: hashedPassword, avatar });
+
+        res.json({ message: "Cập nhật thành công!", userId: user.id, avatar });
     } catch (error) {
         res.status(500).json({ message: "Lỗi server!", error: error.message });
     }
