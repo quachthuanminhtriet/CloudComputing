@@ -1,13 +1,11 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../configs/database");
+module.exports = (sequelize, DataTypes) => {
+    const Message = sequelize.define("Message", {
+        content: { type: DataTypes.TEXT },
+        fileUrl: { type: DataTypes.STRING },
+        type: { type: DataTypes.ENUM("text", "image", "video", "file", "audio"), defaultValue: "text" },
+        isRead: { type: DataTypes.BOOLEAN, defaultValue: false },
+        sentAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+    });
 
-const Message = sequelize.define("Message", {
-    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    conversationId: { type: DataTypes.INTEGER, allowNull: false },
-    senderId: { type: DataTypes.INTEGER, allowNull: false },
-    content: { type: DataTypes.TEXT, allowNull: true }, // Nội dung tin nhắn
-    type: { type: DataTypes.STRING, defaultValue: "text" }, // text, image, file
-    fileUrl: { type: DataTypes.STRING, allowNull: true }, // Link file (nếu có)
-}, { timestamps: true });
-
-module.exports = Message;
+    return Message;
+};

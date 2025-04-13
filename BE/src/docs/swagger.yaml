@@ -1,0 +1,169 @@
+openapi: 3.0.0
+info:
+  title: Messaging SaaS API
+  version: 1.0.0
+  description: Tài liệu Swagger cho hệ thống SaaS nhắn tin
+
+paths:
+  /api/users/register:
+    post:
+      summary: Đăng ký tài khoản mới
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Đăng ký thành công
+
+  /api/users/login:
+    post:
+      summary: Đăng nhập
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Đăng nhập thành công
+
+  /api/messages:
+    post:
+      summary: Gửi tin nhắn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conversationId:
+                  type: string
+                senderId:
+                  type: string
+                text:
+                  type: string
+      responses:
+        '201':
+          description: Gửi thành công
+
+  /api/messages/{conversationId}:
+    get:
+      summary: Lấy tin nhắn theo cuộc trò chuyện
+      parameters:
+        - in: path
+          name: conversationId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thành công
+
+  /api/friends/add:
+    post:
+      summary: Gửi lời mời kết bạn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                senderId:
+                  type: string
+                receiverId:
+                  type: string
+      responses:
+        '200':
+          description: Gửi lời mời thành công
+
+  /api/friends/list/{userId}:
+    get:
+      summary: Lấy danh sách bạn bè
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thành công
+
+  /api/search/users:
+    get:
+      summary: Tìm người dùng theo từ khóa
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thành công
+
+  /api/files/upload:
+    post:
+      summary: Upload file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Upload thành công
+
+  /api/conversations:
+    post:
+      summary: Tạo cuộc trò chuyện
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                members:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Tạo thành công
+
+  /api/conversations/{userId}:
+    get:
+      summary: Lấy danh sách cuộc trò chuyện theo người dùng
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thành công
