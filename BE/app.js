@@ -2,7 +2,9 @@ const express = require('express');
 const app = express();
 const dotenv = require('dotenv');
 const cors = require('cors');
-const db = require('../BE/src/configs/db');
+const path = require('path');
+const db = require(path.resolve(__dirname, '../BE/src/configs/db'));
+
 
 dotenv.config();
 
