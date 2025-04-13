@@ -49,9 +49,10 @@ exports.login = async (req, res) => {
 // --- [GET] /api/me ---
 exports.getProfile = async (req, res) => {
     try {
-        const user = await User.findByPk(req.userId, {
-            attributes: ['id', 'username', 'email', 'avatarUrl', 'birthday']
+        const user = await User.findByPk(req.user.id, {  // Sử dụng req.user.id thay vì req.userId
+            attributes: ['id', 'username', 'email', 'avatarUrl', 'birthday', 'fullName']
         });
+        if (!user) return res.status(404).json({ error: 'User not found' });
         res.json(user);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -62,7 +63,7 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
         const { username, avatarUrl, birthday, fullName } = req.body;
-        const user = await User.findByPk(req.userId);
+        const user = await User.findByPk(req.user.id);  // Sử dụng req.user.id thay vì req.userId
 
         if (!user) return res.status(404).json({ error: 'User not found' });
 

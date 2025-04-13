@@ -50,7 +50,10 @@ db.User.hasMany(db.Friendship, { foreignKey: 'addresseeId', as: 'receivedRequest
 db.User.hasMany(db.SearchHistory, { foreignKey: 'userId' });
 
 // Notifications and Users
-db.Notification.belongsTo(db.User, { foreignKey: 'userId', as: 'user' });  // A notification belongs to a User
-db.User.hasMany(db.Notification, { foreignKey: 'userId', as: 'notifications' });  // A User can have many notifications
+db.Notification.belongsTo(db.User, { foreignKey: 'userId', as: 'user' });       // người nhận
+db.Notification.belongsTo(db.User, { foreignKey: 'senderId', as: 'sender' });   // người gửi
+
+db.User.hasMany(db.Notification, { foreignKey: 'userId', as: 'notifications' }); // nhận
+db.User.hasMany(db.Notification, { foreignKey: 'senderId', as: 'sentNotifications' }); // gửi
 
 module.exports = db;
