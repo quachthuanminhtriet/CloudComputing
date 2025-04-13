@@ -1,169 +1,258 @@
 openapi: 3.0.0
 info:
-  title: Messaging SaaS API
+  title: Chat App API
+  description: API documentation for the Chat App
   version: 1.0.0
-  description: Tài liệu Swagger cho hệ thống SaaS nhắn tin
+servers:
+  - url: 'http://localhost:3000'
 
 paths:
-  /api/users/register:
+  /conversation:
     post:
-      summary: Đăng ký tài khoản mới
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                email:
-                  type: string
-                password:
-                  type: string
+      summary: Create a new conversation
+      description: Creates a new conversation for users.
+      security:
+        - bearerAuth: []
       responses:
         '201':
-          description: Đăng ký thành công
+          description: Conversation created successfully
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
 
-  /api/users/login:
+  /conversation/add-member:
     post:
-      summary: Đăng nhập
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
+      summary: Add a member to a conversation
+      description: Adds a user to an existing conversation.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Đăng nhập thành công
+          description: Member added successfully
+        '400':
+          description: Invalid conversation ID or user ID
+        '401':
+          description: Unauthorized
 
-  /api/messages:
-    post:
-      summary: Gửi tin nhắn
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                conversationId:
-                  type: string
-                senderId:
-                  type: string
-                text:
-                  type: string
-      responses:
-        '201':
-          description: Gửi thành công
-
-  /api/messages/{conversationId}:
+  /conversation/{conversationId}/messages:
     get:
-      summary: Lấy tin nhắn theo cuộc trò chuyện
+      summary: Get messages of a conversation
+      description: Retrieve all messages from a specific conversation.
       parameters:
         - in: path
           name: conversationId
           required: true
+          description: The ID of the conversation
           schema:
             type: string
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Thành công
+          description: Messages retrieved successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Conversation not found
 
-  /api/friends/add:
+  /friendship/request:
     post:
-      summary: Gửi lời mời kết bạn
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                senderId:
-                  type: string
-                receiverId:
-                  type: string
+      summary: Send a friend request
+      description: Sends a friend request to a user.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Gửi lời mời thành công
+          description: Friend request sent
+        '401':
+          description: Unauthorized
 
-  /api/friends/list/{userId}:
-    get:
-      summary: Lấy danh sách bạn bè
+  /friendship/respond/{id}:
+    put:
+      summary: Respond to a friend request
+      description: Accept or reject a friend request.
       parameters:
         - in: path
-          name: userId
+          name: id
           required: true
+          description: The ID of the friend request
           schema:
             type: string
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Thành công
+          description: Friend request responded successfully
+        '400':
+          description: Invalid request ID or input
+        '401':
+          description: Unauthorized
 
-  /api/search/users:
+  /message/send:
+    post:
+      summary: Send a message
+      description: Sends a message to a conversation.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Message sent successfully
+        '400':
+          description: Invalid message input
+        '401':
+          description: Unauthorized
+
+  /message/{id}:
     get:
-      summary: Tìm người dùng theo từ khóa
+      summary: Get messages
+      description: Retrieve messages by message ID.
       parameters:
-        - in: query
-          name: q
+        - in: path
+          name: id
           required: true
+          description: The ID of the message thread
           schema:
             type: string
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Thành công
+          description: Messages retrieved successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Messages not found
 
-  /api/files/upload:
+  /message/uploadFile:
     post:
-      summary: Upload file
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
+      summary: Upload a file
+      description: Uploads a file to the server.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Upload thành công
+          description: File uploaded successfully
+        '400':
+          description: Invalid file input
+        '401':
+          description: Unauthorized
 
-  /api/conversations:
+  /message/downloadFile/{filename}:
+    get:
+      summary: Download a file
+      description: Downloads a file from the server.
+      parameters:
+        - in: path
+          name: filename
+          required: true
+          description: The name of the file to download
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: File downloaded successfully
+        '404':
+          description: File not found
+        '401':
+          description: Unauthorized
+
+  /notification:
+    get:
+      summary: Get notifications
+      description: Retrieves all notifications for the logged-in user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+        '401':
+          description: Unauthorized
+
+  /notification/{notificationId}/read:
+    patch:
+      summary: Mark a notification as read
+      description: Marks a specific notification as read.
+      parameters:
+        - in: path
+          name: notificationId
+          required: true
+          description: The ID of the notification to mark as read
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notification marked as read successfully
+        '404':
+          description: Notification not found
+        '401':
+          description: Unauthorized
+
+  /search/messages:
+    get:
+      summary: Search messages
+      description: Search messages across all conversations.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Search results retrieved successfully
+        '400':
+          description: Invalid search input
+        '401':
+          description: Unauthorized
+
+  /register:
     post:
-      summary: Tạo cuộc trò chuyện
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                members:
-                  type: array
-                  items:
-                    type: string
+      summary: Register a new user
+      description: Registers a new user to the system.
       responses:
         '201':
-          description: Tạo thành công
+          description: User registered successfully
+        '400':
+          description: Invalid input
 
-  /api/conversations/{userId}:
-    get:
-      summary: Lấy danh sách cuộc trò chuyện theo người dùng
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: string
+  /login:
+    post:
+      summary: Login a user
+      description: Authenticates and logs in a user.
       responses:
         '200':
-          description: Thành công
+          description: Login successful
+        '400':
+          description: Invalid credentials
+
+  /me:
+    get:
+      summary: Get the profile of the current user
+      description: Retrieves the profile information of the currently logged-in user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+        '401':
+          description: Unauthorized
+
+  /me:
+    put:
+      summary: Update the profile of the current user
+      description: Updates the profile information of the currently logged-in user.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile updated successfully
+        '401':
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

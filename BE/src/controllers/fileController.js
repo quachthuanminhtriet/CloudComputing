@@ -2,6 +2,7 @@ const db = require('../models/indexModels');
 const File = db.File;
 const multer = require('../configs/multer');  // Thêm multer config
 const path = require('path');
+const fs = require('fs');
 
 // --- [POST] /api/messages/uploadFile ---
 exports.uploadFile = async (req, res) => {
@@ -25,6 +26,7 @@ exports.uploadFile = async (req, res) => {
                 uploaderId: req.user.id               // ID người tải lên
             });
 
+            console.log(fileData);
             res.status(201).json(fileData);
         });
     } catch (err) {
@@ -32,14 +34,26 @@ exports.uploadFile = async (req, res) => {
     }
 };
 
-// --- [GET] /api/messages/download/:filename ---
+// --- [GET] /api/messages/downloadFile/:filename ---
 exports.downloadFile = (req, res) => {
     const { filename } = req.params;
 
-    const filePath = path.join(__dirname, '..', 'uploads', filename); // Đường dẫn tới file
-    res.download(filePath, filename, (err) => {
+    // Đường dẫn file từ thư mục gốc của dự án (nằm ngoài BE)
+    const filePath = path.join(__dirname, '..', 'uploads', filename); // Đảm bảo dùng 'uploads' từ thư mục gốc
+
+    console.log('File path:', filePath); // In ra đường dẫn file để kiểm tra
+
+    // Kiểm tra file có tồn tại không
+    fs.access(filePath, fs.constants.F_OK, (err) => {
         if (err) {
-            res.status(500).json({ error: 'Failed to download file' });
+            return res.status(404).json({ error: 'File not found' });
         }
+
+        // Trả về file cho client
+        res.download(filePath, filename, (err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to download file' });
+            }
+        });
     });
 };

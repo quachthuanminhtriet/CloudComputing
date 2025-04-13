@@ -3,6 +3,7 @@ const app = express();
 const dotenv = require('dotenv');
 const cors = require('cors');
 const db = require('./src/configs/db');
+const upload = require('./src/configs/multer'); // Import multer config
 
 dotenv.config();
 

@@ -5,15 +5,15 @@ const fileController = require('../controllers/fileController');
 const authenticateToken = require('../middleware/authMiddleware');  // Middleware xác thực token
 
 // Đường dẫn gửi tin nhắn
-router.post('/messages/send', authenticateToken, messageController.sendMessage);
+router.post('/send', authenticateToken, messageController.sendMessage);
 
 // Đường dẫn lấy tin nhắn
-router.get('/messages/:id', authenticateToken, messageController.getMessages);
+router.get('/:id', authenticateToken, messageController.getMessages);
 
 // Đường dẫn tải file lên
-router.post('/messages/uploadFile', authenticateToken, fileController.uploadFile);
+router.post('/uploadFile', authenticateToken, fileController.uploadFile);
 
 // Đường dẫn tải file về
-router.get('/messages/download/:filename', fileController.downloadFile);
+router.get('/downloadFile/:filename', authenticateToken, fileController.downloadFile);
 
 module.exports = router;
