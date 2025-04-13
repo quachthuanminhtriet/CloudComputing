@@ -1,5 +1,5 @@
 const db = require('../models/indexModels');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = db.User;
 
