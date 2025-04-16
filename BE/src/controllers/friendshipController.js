@@ -2,6 +2,49 @@ const db = require('../models/indexModels');
 const Friendship = db.Friendship;
 const Notification = db.Notification;
 
+
+// --- [GET] /api/friends ---
+exports.getFriends = async (req, res) => {
+    try {
+        const userId = req.user.id; // Lấy ID người dùng từ token
+
+        // Tìm các mối quan hệ kết bạn giữa userId và các user khác có trạng thái 'accepted'
+        const friends = await db.Friendship.findAll({
+            where: {
+                [Op.or]: [
+                    { requesterId: userId, status: 'accepted' },
+                    { addresseeId: userId, status: 'accepted' }
+                ]
+            },
+            include: [
+                {
+                    model: db.User,
+                    as: 'requester', // Bạn bè theo vai trò requester
+                    attributes: ['id', 'username']
+                },
+                {
+                    model: db.User,
+                    as: 'addressee', // Bạn bè theo vai trò addressee
+                    attributes: ['id', 'username']
+                }
+            ]
+        });
+
+        // Lọc danh sách bạn bè
+        const friendsList = friends.map(friend => {
+            return friend.requesterId === userId
+                ? friend.addressee
+                : friend.requester;
+        });
+
+        res.json(friendsList);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
 exports.sendFriendRequest = async (req, res) => {
     try {
         const { addresseeId } = req.body;
