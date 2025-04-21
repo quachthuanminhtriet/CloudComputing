@@ -133,7 +133,8 @@ exports.getChattingUsers = async (req, res) => {
                     id: otherUser.id,
                     fullName: otherUser.fullName,
                     avatarUrl: otherUser.avatarUrl,
-                    lastMessageAt: msg.createdAt
+                    lastMessageAt: msg.createdAt,
+                    lastMessageContent: msg.content,
                 });
             }
         });
