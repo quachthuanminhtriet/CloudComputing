@@ -14,6 +14,6 @@ router.get('/:id', authenticateToken, messageController.getMessages);
 router.post('/uploadFile', authenticateToken, fileController.uploadFile);
 
 // Đường dẫn tải file về
-router.get('/downloadFile/:filename', authenticateToken, fileController.downloadFile);
+router.get('/downloadFile/:id', authenticateToken, fileController.downloadFile);
 
 module.exports = router;

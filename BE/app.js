@@ -4,12 +4,14 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const db = require('./src/configs/db');
 const upload = require('./src/configs/multer'); // Import multer config
+const fileUpload = require('express-fileupload');
 
 dotenv.config();
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(fileUpload()); 
 
 // Routes
 app.use('/api/users', require('./src/routes/userRoutes'));
