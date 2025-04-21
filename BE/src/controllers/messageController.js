@@ -102,10 +102,11 @@ exports.getChattingUsers = async (req, res) => {
         const messages = await Message.findAll({
             where: {
                 [Op.or]: [
-                    { senderId: senderId },
+                    { senderId },
                     { receiverId: senderId }
                 ]
             },
+            order: [['createdAt', 'DESC']],
             include: [
                 {
                     model: User,
@@ -120,30 +121,24 @@ exports.getChattingUsers = async (req, res) => {
             ]
         });
 
-        // Tạo một Set để lưu trữ các ID người dùng duy nhất đã liên lạc
-        const chattingUserIds = new Set();
+        const userMap = new Map();
 
         messages.forEach(msg => {
-            if (msg.senderId !== senderId) {
-                chattingUserIds.add(msg.senderId);
-            }
-            if (msg.receiverId !== senderId) {
-                chattingUserIds.add(msg.receiverId);
+            const otherUser = msg.senderId === senderId ? msg.receiver : msg.sender;
+            const otherUserId = otherUser.id;
+
+            // Chỉ thêm nếu chưa tồn tại (vì đã sort DESC nên đảm bảo là tin nhắn mới nhất)
+            if (!userMap.has(otherUserId)) {
+                userMap.set(otherUserId, {
+                    id: otherUser.id,
+                    fullName: otherUser.fullName,
+                    avatarUrl: otherUser.avatarUrl,
+                    lastMessageAt: msg.createdAt
+                });
             }
         });
 
-        // Chuyển Set thành một mảng các ID
-        const userIds = Array.from(chattingUserIds);
-
-        // Lấy thông tin chi tiết của những người dùng đã liên lạc
-        const chattingUsers = await User.findAll({
-            where: {
-                id: {
-                    [Op.in]: userIds
-                }
-            },
-            attributes: ['id', 'fullName', 'avatarUrl']
-        });
+        const chattingUsers = Array.from(userMap.values());
 
         res.json(chattingUsers);
 
