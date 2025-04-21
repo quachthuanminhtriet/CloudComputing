@@ -10,7 +10,7 @@ router.post('/send', authenticateToken, messageController.sendMessage);
 // Đường dẫn lấy tin nhắn
 router.get('/:id', authenticateToken, messageController.getMessages);
 
-router.get('/')
+router.get('/api/messages/contacts', authenticateToken, messageController.getContacts);
 
 // Đường dẫn tải file lên
 router.post('/uploadFile', authenticateToken, fileController.uploadFile);

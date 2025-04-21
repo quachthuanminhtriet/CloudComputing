@@ -55,6 +55,9 @@ db.ConversationMember.belongsTo(db.Conversation, { foreignKey: 'conversationId' 
 db.User.hasMany(db.Friendship, { foreignKey: 'requesterId', as: 'sentRequests' });
 db.User.hasMany(db.Friendship, { foreignKey: 'addresseeId', as: 'receivedRequests' });
 
+db.Friendship.belongsTo(db.User, { foreignKey: 'requesterId', as: 'requester' });
+db.Friendship.belongsTo(db.User, { foreignKey: 'addresseeId', as: 'addressee' });
+
 // SearchHistory ↔ User
 db.User.hasMany(db.SearchHistory, { foreignKey: 'userId' });
 
