@@ -1,36 +1,46 @@
 const db = require('../models/indexModels');
+const { Op } = db.Sequelize;
+
 const Message = db.Message;
 const Notification = db.Notification;
-const { Op } = db.Sequelize;
+const User = db.User;
 
 // --- [POST] /api/messages/send ---
 exports.sendMessage = async (req, res) => {
     try {
-        let { content, receiverId, type } = req.body;
+        const { content, receiverId, type } = req.body;
         const senderId = req.user.id;
 
-        // Tạo tin nhắn
+        console.log('content', req.content);
+        console.log('req.receiverId:', req.receiverId);
+        if (!receiverId || !content) {
+            return res.status(400).json({ error: 'receiverId và content là bắt buộc.' });
+        }
+
+        const receiver = await db.User.findByPk(receiverId);
+        if (!receiver) {
+            return res.status(404).json({ error: 'User không tồn tại' });
+        }
+
         const message = await Message.create({
             content,
-            type,
+            type: type || 'text',
             senderId,
             receiverId,
             isRead: false
         });
 
-        // Tạo thông báo cho người nhận
         await Notification.create({
             userId: receiverId,
             message: `Bạn có tin nhắn mới từ ${req.user.username}`,
             type: 'message',
             isRead: false,
-            senderId: req.user.id,
+            senderId
         });
 
-        // Trả về message
         res.status(201).json({
             message,
-            isGroup: false // Vì đây là tin nhắn 1-1
+            isGroup: false
         });
 
     } catch (err) {
@@ -42,10 +52,19 @@ exports.sendMessage = async (req, res) => {
 // --- [GET] /api/messages/:receiverId ---
 exports.getMessages = async (req, res) => {
     try {
-        const { id: receiverId } = req.params;
+        const receiverId = req.params.receiverId;
         const senderId = req.user.id;
 
-        // Lấy tất cả tin nhắn giữa senderId và receiverId
+        // Validate receiverId
+        if (!receiverId) {
+            return res.status(400).json({ error: 'receiverId is required' });
+        }
+
+        // Ensure receiverId is a valid number (if IDs are numeric)
+        if (isNaN(receiverId)) {
+            return res.status(400).json({ error: 'receiverId must be a valid ID' });
+        }
+
         const messages = await Message.findAll({
             where: {
                 [Op.or]: [
@@ -54,56 +73,82 @@ exports.getMessages = async (req, res) => {
                 ]
             },
             order: [['createdAt', 'ASC']],
-            include: [{
-                model: db.User,
-                as: 'sender',
-                attributes: ['id', 'username']
-            }]
+            include: [
+                {
+                    model: User,
+                    as: 'sender',
+                    attributes: ['id', 'fullName', 'avatarUrl']
+                }
+            ]
         });
 
         res.json({
-            isGroup: false, // Đây là tin nhắn 1-1
+            isGroup: false,
             messages
         });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 };
 
 
-exports.getContacts = async (req, res) => {
+// --- [GET] /api/messages ---
+exports.getChattingUsers = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const senderId = req.user.id;
 
-        // Lấy tất cả senderId và receiverId có liên quan tới user
+        // Lấy tất cả tin nhắn mà người dùng đã gửi hoặc nhận
         const messages = await Message.findAll({
             where: {
                 [Op.or]: [
-                    { senderId: userId },
-                    { receiverId: userId }
+                    { senderId: senderId },
+                    { receiverId: senderId }
                 ]
             },
-            attributes: ['senderId', 'receiverId'],
-            raw: true
+            include: [
+                {
+                    model: User,
+                    as: 'sender',
+                    attributes: ['id', 'fullName', 'avatarUrl']
+                },
+                {
+                    model: User,
+                    as: 'receiver',
+                    attributes: ['id', 'fullName', 'avatarUrl']
+                }
+            ]
         });
 
-        const contactIds = new Set();
+        // Tạo một Set để lưu trữ các ID người dùng duy nhất đã liên lạc
+        const chattingUserIds = new Set();
 
         messages.forEach(msg => {
-            if (msg.senderId !== userId) contactIds.add(msg.senderId);
-            if (msg.receiverId !== userId) contactIds.add(msg.receiverId);
+            if (msg.senderId !== senderId) {
+                chattingUserIds.add(msg.senderId);
+            }
+            if (msg.receiverId !== senderId) {
+                chattingUserIds.add(msg.receiverId);
+            }
         });
 
-        // Lấy thông tin user của những người này
-        const contacts = await db.User.findAll({
+        // Chuyển Set thành một mảng các ID
+        const userIds = Array.from(chattingUserIds);
+
+        // Lấy thông tin chi tiết của những người dùng đã liên lạc
+        const chattingUsers = await User.findAll({
             where: {
-                id: Array.from(contactIds)
+                id: {
+                    [Op.in]: userIds
+                }
             },
-            attributes: ['id', 'username', 'avatar'] // thêm avatar nếu có
+            attributes: ['id', 'fullName', 'avatarUrl']
         });
 
-        res.json({ contacts });
+        res.json(chattingUsers);
+
     } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 };

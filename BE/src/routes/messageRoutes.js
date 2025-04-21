@@ -8,9 +8,9 @@ const authenticateToken = require('../middleware/authMiddleware');  // Middlewar
 router.post('/send', authenticateToken, messageController.sendMessage);
 
 // Đường dẫn lấy tin nhắn
-router.get('/:id', authenticateToken, messageController.getMessages);
+router.get('/:receiverId', authenticateToken, messageController.getMessages);
 
-router.get('/api/messages/contacts', authenticateToken, messageController.getContacts);
+router.get('/', authenticateToken, messageController.getChattingUsers);
 
 // Đường dẫn tải file lên
 router.post('/uploadFile', authenticateToken, fileController.uploadFile);

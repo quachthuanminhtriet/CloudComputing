@@ -18,7 +18,6 @@ app.use('/api/users', require('./src/routes/userRoutes'));
 app.use('/api/messages', require('./src/routes/messageRoutes'));
 app.use('/api/friends', require('./src/routes/friendshipRoutes'));
 app.use('/api/search', require('./src/routes/searchRoutes'));
-app.use('/api/conversations', require('./src/routes/conversationRoutes'));
 app.use('/api/notifications', require('./src/routes/notificationRoutes'));
 
 // Root
