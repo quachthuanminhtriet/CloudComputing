@@ -77,7 +77,7 @@ exports.getMessages = async (req, res) => {
                 {
                     model: User,
                     as: 'sender',
-                    attributes: ['id', 'fullName', 'avatarUrl']
+                    attributes: ['id', 'fullName', 'avatarUrl', 'createdAt']
                 }
             ]
         });
