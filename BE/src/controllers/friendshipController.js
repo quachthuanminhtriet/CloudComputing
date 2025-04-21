@@ -21,12 +21,12 @@ exports.getFriends = async (req, res) => {
                 {
                     model: db.User,
                     as: 'requester', // Bạn bè theo vai trò requester
-                    attributes: ['id', 'username']
+                    attributes: ['id', 'username', 'avatarUrl']
                 },
                 {
                     model: db.User,
                     as: 'addressee', // Bạn bè theo vai trò addressee
-                    attributes: ['id', 'username']
+                    attributes: ['id', 'username', 'avatarUrl']
                 }
             ]
         });
