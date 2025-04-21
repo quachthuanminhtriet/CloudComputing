@@ -13,6 +13,7 @@ exports.sendMessage = async (req, res) => {
 
         // Nếu không có conversationId mà có receiverId → Chat 1-1 → kiểm tra & tạo tự động nếu cần
         if (!conversationId && receiverId) {
+            // Kiểm tra xem đã có cuộc trò chuyện 1-1 chưa
             const conversations = await Conversation.findAll({
                 where: { isGroup: false },
                 include: [
@@ -31,7 +32,7 @@ exports.sendMessage = async (req, res) => {
             });
 
             if (matchedConversation) {
-                conversationId = matchedConversation.id;
+                conversationId = matchedConversation.id; // Nếu đã có conversation thì lấy lại ID
             } else {
                 // Tạo mới cuộc trò chuyện 1-1
                 const newConvo = await Conversation.create({
@@ -46,7 +47,7 @@ exports.sendMessage = async (req, res) => {
                     { conversationId: newConvo.id, userId: receiverId }
                 ]);
 
-                conversationId = newConvo.id;
+                conversationId = newConvo.id; // Gán ID mới tạo cho conversationId
             }
         }
 
@@ -95,7 +96,7 @@ exports.sendMessage = async (req, res) => {
             });
         }
 
-        // ✅ Trả về message
+        // Trả về message
         res.status(201).json({
             message,
             isGroup: conversation.isGroup
@@ -106,6 +107,7 @@ exports.sendMessage = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // --- [GET] /api/messages/:conversationId ---
 exports.getMessages = async (req, res) => {
