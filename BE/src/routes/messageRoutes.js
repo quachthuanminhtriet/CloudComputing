@@ -10,6 +10,8 @@ router.post('/send', authenticateToken, messageController.sendMessage);
 // Đường dẫn lấy tin nhắn
 router.get('/:id', authenticateToken, messageController.getMessages);
 
+router.get('/')
+
 // Đường dẫn tải file lên
 router.post('/uploadFile', authenticateToken, fileController.uploadFile);
 

@@ -1,6 +1,7 @@
 const db = require('../models/indexModels');
 const Friendship = db.Friendship;
 const Notification = db.Notification;
+const { Op } = db.Sequelize;
 
 
 // --- [GET] /api/friends ---
