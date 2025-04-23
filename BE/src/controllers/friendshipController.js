@@ -107,9 +107,9 @@ exports.cancelFriendRequest = async (req, res) => {
             return res.status(404).json({ error: 'Request not found hoặc bạn không phải người nhận' });
         }
 
-        request.status = 'cancel';
+        request.status = 'blocked';
         await request.save();
-        
+
         res.json(request);
     } catch (err) {
         console.error(err);
