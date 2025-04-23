@@ -116,3 +116,35 @@ exports.cancelFriendRequest = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+
+exports.getFriendRequests = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const requests = await Friendship.findAll({
+            where: {
+                addresseeId: userId,
+                status: 'pending'
+            },
+            include: [
+                {
+                    model: db.User,
+                    as: 'requester',
+                    attributes: ['id', 'username', 'avatarUrl']
+                }
+            ]
+        });
+
+        // Trả về danh sách requester (người gửi lời mời)
+        const pendingRequests = requests.map(req => ({
+            id: req.id,
+            requester: req.requester
+        }));
+
+        res.json(pendingRequests);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
