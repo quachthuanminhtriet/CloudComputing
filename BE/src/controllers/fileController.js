@@ -9,32 +9,37 @@ const axios = require('axios');
 // --- [POST] /api/messages/uploadFile ---
 exports.uploadFile = async (req, res) => {
     try {
-        const file = req.files ? req.files.file : null; // Lấy file
-        const receiverId = req.body.receiverId; // express-fileupload
-        const senderId = req.user.id; // Middleware xác thực user
-
-
+        const file = req.files ? req.files.file : null;
+        const receiverId = req.body.receiverId;
+        const senderId = req.user.id;
 
         if (!file || !receiverId) {
             return res.status(400).json({ error: 'File và receiverId là bắt buộc' });
         }
 
-        // Tạo tin nhắn mới trước khi upload file
+        // Tạo tin nhắn mới
         const message = await Message.create({
-            content: 'File đính kèm',  // Nội dung tin nhắn mặc định
-            type: 'file',                // Loại tin nhắn là file
+            content: 'File đính kèm',
+            type: 'file',
             senderId,
             receiverId,
-            isRead: false                // Chưa đọc
+            isRead: false
         });
 
-        // Upload file lên Cloudinary
+        // Xác định loại file để upload đúng định dạng
+        let resourceType = 'raw';
+        if (file.mimetype.startsWith('image/')) {
+            resourceType = 'image';
+        } else if (file.mimetype.startsWith('video/')) {
+            resourceType = 'video';
+        }
+
         const streamUpload = () => {
             return new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
                     {
                         folder: 'chat_files',
-                        resource_type: 'raw' // Tải file ở dạng raw (không phải hình ảnh/video)
+                        resource_type: resourceType
                     },
                     (error, result) => {
                         if (result) resolve(result);
@@ -45,34 +50,24 @@ exports.uploadFile = async (req, res) => {
             });
         };
 
-        const result = await streamUpload(); // Upload file lên Cloudinary
+        const result = await streamUpload();
 
-        // Lưu thông tin file vào DB
+        // Lưu thông tin file
         const fileData = await File.create({
             fileUrl: result.secure_url,
             fileName: file.name,
             fileType: file.mimetype,
             fileSize: file.size,
             uploaderId: senderId,
-            messageId: message.id // Liên kết file với tin nhắn
+            messageId: message.id
         });
 
-        // Cập nhật tin nhắn với URL của file
+        // Cập nhật tin nhắn
         await message.update({
             fileUrl: result.secure_url,
             fileType: file.mimetype
         });
 
-        // Gửi notification (optional)
-        await Notification.create({
-            userId: receiverId,
-            message: `Bạn có file mới từ ${req.user.username}`,
-            type: 'message',
-            isRead: false,
-            senderId
-        });
-
-        // Trả về dữ liệu tin nhắn và file đã lưu
         res.status(201).json({ message, fileData });
 
     } catch (err) {
@@ -80,6 +75,7 @@ exports.uploadFile = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // --- [GET] /api/messages/downloadFile/:id ---
 exports.downloadFile = async (req, res) => {

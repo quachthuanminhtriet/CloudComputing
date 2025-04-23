@@ -99,3 +99,20 @@ exports.acceptFriendRequest = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.cancelFriendRequest = async (req, res) => {
+    try {
+        const request = await Friendship.findByPk(req.params.id);
+        if (!request || request.addresseeId !== req.user.id) {
+            return res.status(404).json({ error: 'Request not found hoặc bạn không phải người nhận' });
+        }
+
+        request.status = 'cancel';
+        await request.save();
+        
+        res.json(request);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
