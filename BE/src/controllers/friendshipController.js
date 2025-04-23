@@ -131,7 +131,7 @@ exports.getFriendRequests = async (req, res) => {
                 {
                     model: db.User,
                     as: 'requester',
-                    attributes: ['id', 'username', 'avatarUrl', 'fullName']
+                    attributes: ['id', 'username', 'avatarUrl', 'fullName', 'createdAt']
                 }
             ]
         });
