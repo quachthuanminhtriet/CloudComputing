@@ -7,5 +7,6 @@ router.post('/register', userController.register);
 router.post('/login', userController.login);
 router.get('/me', authMiddleware, userController.getProfile);
 router.put('/me', authMiddleware, userController.updateProfile);
+router.get('/search/:username', authMiddleware, userController.searchUsers);
 
 module.exports = router;

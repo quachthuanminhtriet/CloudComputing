@@ -2,6 +2,7 @@ const db = require('../models/indexModels');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = db.User;
+const { Op } = require('sequelize');
 
 const JWT_SECRET = process.env.JWT_SECRET || '123456789@';
 
@@ -34,7 +35,7 @@ exports.login = async (req, res) => {
 
         console.log('password:', password);  // Log mật khẩu người dùng nhập
         console.log('hashed password:', user.passwordHash);  // Log mật khẩu đã băm trong DB
-        
+
         const valid = await bcrypt.compare(password.trim(), user.passwordHash);
         if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
@@ -75,6 +76,36 @@ exports.updateProfile = async (req, res) => {
         await user.save();
 
         res.json({ message: 'Profile updated', user });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+// --- [GET] /api/users/search/:username ---
+exports.searchUsers = async (req, res) => {
+    try {
+        const { username } = req.params;
+
+        if (!username || username.trim() === '') {
+            return res.status(400).json({ error: 'Username is required' });
+        }
+
+        const users = await User.findAll({
+            where: {
+                username: {
+                    [Op.like]: `%${username}%`
+                },
+                id: {
+                    [Op.ne]: req.user.id  // Loại trừ người đang đăng nhập
+                }
+            },
+            attributes: ['id', 'username', 'avatarUrl', 'fullName'],
+            limit: 20,
+            order: [['username', 'ASC']]
+        });
+
+        res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
