@@ -15,6 +15,11 @@ const io = new Server(server, {
 });
 
 const userSocketMap = {};
+// Gắn io vào app để dùng trong controller
+app.set('io', io);
+
+// Dùng global lưu map userId -> socketId
+global.userSocketMap = {};
 
 io.on('connection', (socket) => {
   socket.on('register', (userId) => {

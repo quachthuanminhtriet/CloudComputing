@@ -20,7 +20,6 @@ exports.uploadFile = async (req, res) => {
         // Xác định loại file và message type
         let resourceType = 'raw';
         let messageType = 'file';
-
         if (file.mimetype.startsWith('image/')) {
             resourceType = 'image';
             messageType = 'image';
@@ -33,10 +32,7 @@ exports.uploadFile = async (req, res) => {
         const streamUpload = () => {
             return new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
-                    {
-                        folder: 'chat_files',
-                        resource_type: resourceType
-                    },
+                    { folder: 'chat_files', resource_type: resourceType },
                     (error, result) => {
                         if (result) resolve(result);
                         else reject(error);
@@ -48,7 +44,7 @@ exports.uploadFile = async (req, res) => {
 
         const result = await streamUpload();
 
-        // Tạo tin nhắn mới
+        // Lưu message vào DB
         const message = await Message.create({
             content: 'File đính kèm',
             type: messageType,
@@ -69,6 +65,32 @@ exports.uploadFile = async (req, res) => {
             messageId: message.id
         });
 
+        // Emit socket nếu receiver online
+        const io = req.app.get('io');
+        const socketMap = global.userSocketMap || {}; // dùng global lưu socket map
+        const toSocketId = socketMap[receiverId];
+
+        if (toSocketId) {
+            io.to(toSocketId).emit('file message', {
+                id: message.id,
+                content: message.content,
+                senderId,
+                receiverId,
+                createdAt: message.createdAt,
+                fileUrl: message.fileUrl,
+                type: message.type,
+                fileType: message.fileType,
+                fileData: {
+                    fileName: file.name
+                },
+                sender: {
+                    id: senderId,
+                    fullName: req.user.fullName,
+                    avatarUrl: req.user.avatarUrl
+                }
+            });
+        }
+
         res.status(201).json({ message, fileData });
 
     } catch (err) {
@@ -76,6 +98,7 @@ exports.uploadFile = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 
 // --- [GET] /api/messages/downloadFile/:id ---
