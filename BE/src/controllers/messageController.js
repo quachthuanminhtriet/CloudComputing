@@ -4,6 +4,7 @@ const { Op } = db.Sequelize;
 const Message = db.Message;
 const Notification = db.Notification;
 const User = db.User;
+const File = db.File;
 
 // --- [POST] /api/messages/send ---
 exports.sendMessage = async (req, res) => {
@@ -79,6 +80,12 @@ exports.getMessages = async (req, res) => {
                     model: User,
                     as: 'sender',
                     attributes: ['id', 'fullName', 'avatarUrl', 'createdAt', 'updatedAt']
+                },
+                {
+                    model: File,
+                    as: 'fileData',
+                    attributes: ['fileName'], // Chỉ lấy fileName
+                    required: false
                 }
             ]
         });
