@@ -28,7 +28,7 @@ db.User.hasMany(db.File, { foreignKey: 'uploaderId' });
 db.File.belongsTo(db.User, { foreignKey: 'uploaderId' });
 
 // Message ↔ File
-db.Message.hasMany(db.File, { foreignKey: 'messageId' });
+db.Message.hasOne(db.File, { foreignKey: 'messageId', as: 'fileData' });
 db.File.belongsTo(db.Message, { foreignKey: 'messageId' });
 
 // Friendship (Friend Request)
