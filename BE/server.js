@@ -33,6 +33,29 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Upload file
+  socket.on('uploadFile', async (fileData) => {
+    try {
+      // Xử lý file upload ở backend
+      const { file, receiverId } = fileData; // Giả sử bạn nhận được file và receiverId
+      const senderId = socket.userId;
+
+      // Thực hiện upload file (sử dụng hàm uploadFile đã tạo từ trước)
+      const fileUrl = await uploadFile(file, senderId, receiverId); // Đây là ví dụ cách gọi hàm uploadFile
+
+      // Gửi thông báo cho người nhận
+      const toSocketId = userSocketMap[receiverId];
+      if (toSocketId) {
+        io.to(toSocketId).emit('file message', {
+          fileUrl,
+          fromUserId: senderId
+        });
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+    }
+  });
+
   socket.on('disconnect', () => {
     if (socket.userId && userSocketMap[socket.userId]) {
       delete userSocketMap[socket.userId];

@@ -17,43 +17,23 @@ exports.uploadFile = async (req, res) => {
             return res.status(400).json({ error: 'File và receiverId là bắt buộc' });
         }
 
-        // Kiểm tra xem file đã tồn tại trong cơ sở dữ liệu chưa
-        const existingFile = await File.findOne({
-            where: {
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.mimetype
-            }
+        // Tạo tin nhắn mới
+        const message = await Message.create({
+            content: 'File đính kèm',
+            type: 'file',
+            senderId,
+            receiverId,
+            isRead: false
         });
 
-        if (existingFile) {
-            // Nếu file đã tồn tại, lấy URL của file cũ
-            const message = await Message.create({
-                content: 'File đính kèm',
-                type: existingFile.fileType.startsWith('image/') ? 'image' : existingFile.fileType.startsWith('video/') ? 'video' : 'file',
-                senderId,
-                receiverId,
-                isRead: false,
-                fileUrl: existingFile.fileUrl,
-                fileType: file.mimetype
-            });
-
-            return res.status(201).json({ message, fileData: existingFile });
-        }
-
-        // Xác định loại file và message type
+        // Xác định loại file để upload đúng định dạng
         let resourceType = 'raw';
-        let messageType = 'file';
-
         if (file.mimetype.startsWith('image/')) {
             resourceType = 'image';
-            messageType = 'image';
         } else if (file.mimetype.startsWith('video/')) {
             resourceType = 'video';
-            messageType = 'video';
         }
 
-        // Upload lên Cloudinary
         const streamUpload = () => {
             return new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
@@ -72,18 +52,7 @@ exports.uploadFile = async (req, res) => {
 
         const result = await streamUpload();
 
-        // Tạo tin nhắn mới
-        const message = await Message.create({
-            content: 'File đính kèm',
-            type: messageType,
-            senderId,
-            receiverId,
-            isRead: false,
-            fileUrl: result.secure_url,
-            fileType: file.mimetype
-        });
-
-        // Lưu thông tin file vào database
+        // Lưu thông tin file
         const fileData = await File.create({
             fileUrl: result.secure_url,
             fileName: file.name,
@@ -93,6 +62,12 @@ exports.uploadFile = async (req, res) => {
             messageId: message.id
         });
 
+        // Cập nhật tin nhắn
+        await message.update({
+            fileUrl: result.secure_url,
+            fileType: file.mimetype
+        });
+
         res.status(201).json({ message, fileData });
 
     } catch (err) {
@@ -100,7 +75,6 @@ exports.uploadFile = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
 
 
 // --- [GET] /api/messages/downloadFile/:id ---
