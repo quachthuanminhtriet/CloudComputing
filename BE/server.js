@@ -1,9 +1,46 @@
 const app = require('./app');
 const db = require('./src/models/indexModels');
 const http = require('http');
+const { Server } = require("socket.io");
 
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+io.on('connection', (socket) => {
+  socket.on('register', (userId) => {
+    userSocketMap[userId] = socket.id;
+    socket.userId = userId;
+    console.log(`User ${userId} connected with socket ${socket.id}`);
+  });
+
+  socket.on('chat message', ({ toUserId, message }) => {
+    const toSocketId = userSocketMap[toUserId];
+    if (toSocketId) {
+      io.to(toSocketId).emit('chat message', {
+        message,
+        fromUserId: socket.userId
+      });
+      console.log(`Message from ${socket.userId} to ${toUserId}: ${message}`);
+    } else {
+      console.warn(`User ${toUserId} not connected`);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    if (socket.userId && userSocketMap[socket.userId]) {
+      delete userSocketMap[socket.userId];
+      console.log(`User ${socket.userId} disconnected`);
+    }
+  });
+});
+
 
 // Sync database và khởi chạy server
 db.sequelize.sync().then(() => {
