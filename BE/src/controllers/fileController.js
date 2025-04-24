@@ -17,6 +17,30 @@ exports.uploadFile = async (req, res) => {
             return res.status(400).json({ error: 'File và receiverId là bắt buộc' });
         }
 
+        // Kiểm tra xem file đã tồn tại trong cơ sở dữ liệu chưa
+        const existingFile = await File.findOne({
+            where: {
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.mimetype
+            }
+        });
+
+        if (existingFile) {
+            // Nếu file đã tồn tại, lấy URL của file cũ
+            const message = await Message.create({
+                content: 'File đính kèm',
+                type: existingFile.fileType.startsWith('image/') ? 'image' : existingFile.fileType.startsWith('video/') ? 'video' : 'file',
+                senderId,
+                receiverId,
+                isRead: false,
+                fileUrl: existingFile.fileUrl,
+                fileType: file.mimetype
+            });
+
+            return res.status(201).json({ message, fileData: existingFile });
+        }
+
         // Xác định loại file và message type
         let resourceType = 'raw';
         let messageType = 'file';
@@ -59,7 +83,7 @@ exports.uploadFile = async (req, res) => {
             fileType: file.mimetype
         });
 
-        // Lưu thông tin file
+        // Lưu thông tin file vào database
         const fileData = await File.create({
             fileUrl: result.secure_url,
             fileName: file.name,
@@ -76,6 +100,7 @@ exports.uploadFile = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 
 // --- [GET] /api/messages/downloadFile/:id ---

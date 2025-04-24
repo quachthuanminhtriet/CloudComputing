@@ -54,12 +54,34 @@ exports.sendFriendRequest = async (req, res) => {
             return res.status(400).json({ error: 'Thiếu addresseeId' });
         }
 
+        // Kiểm tra xem mối quan hệ đã tồn tại chưa
+        const existingRequest = await Friendship.findOne({
+            where: {
+                [Op.or]: [
+                    { requesterId: req.user.id, addresseeId },
+                    { requesterId: addresseeId, addresseeId: req.user.id }
+                ]
+            }
+        });
+
+        // Nếu có một yêu cầu kết bạn hoặc đã kết bạn rồi
+        if (existingRequest) {
+            // Kiểm tra trạng thái, nếu đã kết bạn, trả về thông báo
+            if (existingRequest.status === 'accepted') {
+                return res.status(400).json({ error: 'Bạn và người này đã là bạn bè.' });
+            } else {
+                return res.status(400).json({ error: 'Bạn đã gửi lời mời kết bạn hoặc đã nhận lời mời từ người này.' });
+            }
+        }
+
+        // Tạo yêu cầu kết bạn mới
         const request = await Friendship.create({
             requesterId: req.user.id,
             addresseeId,
             status: 'pending'
         });
 
+        // Gửi thông báo cho người nhận lời mời
         await Notification.create({
             userId: addresseeId,               // Người nhận là người được mời
             senderId: req.user.id,             // Người gửi là người đang gửi lời mời
@@ -74,6 +96,7 @@ exports.sendFriendRequest = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 exports.acceptFriendRequest = async (req, res) => {
     try {
