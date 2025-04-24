@@ -1,9 +1,10 @@
+const http = require('http');
+const { Server } = require('socket.io');
 const app = require('./app');
 const db = require('./src/models/indexModels');
-const http = require('http');
-const { Server } = require("socket.io");
 
 const PORT = process.env.PORT || 3000;
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -12,6 +13,8 @@ const io = new Server(server, {
     methods: ['GET', 'POST']
   }
 });
+
+const userSocketMap = {};
 
 io.on('connection', (socket) => {
   socket.on('register', (userId) => {
@@ -27,24 +30,18 @@ io.on('connection', (socket) => {
         message,
         fromUserId: socket.userId
       });
-      console.log(`Message from ${socket.userId} to ${toUserId}: ${message}`);
-    } else {
-      console.warn(`User ${toUserId} not connected`);
     }
   });
 
   socket.on('disconnect', () => {
     if (socket.userId && userSocketMap[socket.userId]) {
       delete userSocketMap[socket.userId];
-      console.log(`User ${socket.userId} disconnected`);
     }
   });
 });
 
-
-// Sync database và khởi chạy server
 db.sequelize.sync().then(() => {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);
   });
 });
