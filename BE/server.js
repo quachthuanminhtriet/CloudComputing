@@ -4,6 +4,7 @@ const app = require('./app');
 const db = require('./src/models/indexModels');
 
 const PORT = process.env.PORT || 3000;
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -26,17 +27,6 @@ io.on('connection', (socket) => {
     const toSocketId = userSocketMap[toUserId];
     if (toSocketId) {
       io.to(toSocketId).emit('chat message', {
-        message,
-        fromUserId: socket.userId
-      });
-    }
-  });
-
-  // 👉 Không upload file ở đây. Chỉ báo cho người nhận khi file đã upload xong qua REST.
-  socket.on('file message', ({ toUserId, message }) => {
-    const toSocketId = userSocketMap[toUserId];
-    if (toSocketId) {
-      io.to(toSocketId).emit('file message', {
         message,
         fromUserId: socket.userId
       });
