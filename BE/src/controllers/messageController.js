@@ -73,6 +73,7 @@ exports.getMessages = async (req, res) => {
                 ]
             },
             order: [['createdAt', 'ASC']],
+            attributes: ['id', 'content', 'senderId', 'receiverId', 'createdAt', 'fileUrl', 'type'],
             include: [
                 {
                     model: User,
