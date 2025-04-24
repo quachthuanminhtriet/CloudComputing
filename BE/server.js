@@ -23,15 +23,22 @@ io.on('connection', (socket) => {
     console.log(`User ${userId} connected with socket ${socket.id}`);
   });
 
-  socket.on('chat message', ({ toUserId, message }) => {
+  socket.on('chat message', async ({ toUserId, message, fileData }) => {
     const toSocketId = userSocketMap[toUserId];
     if (toSocketId) {
-      io.to(toSocketId).emit('chat message', {
-        message,
-        fromUserId: socket.userId
-      });
+      try {
+        const savedMessage = await db.Message.create({ message, fileData }); // Example DB operation
+        io.to(toSocketId).emit('chat message', {
+          message: savedMessage.message,
+          fileData: savedMessage.fileData,
+          fromUserId: socket.userId
+        });
+      } catch (error) {
+        console.error('Failed to save message:', error);
+      }
     }
   });
+  
 
   socket.on('file uploaded', ({ toUserId, fileData }) => {
     const toSocketId = userSocketMap[toUserId];
